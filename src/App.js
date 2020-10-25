@@ -1,6 +1,5 @@
 import React from 'react'
-import Switch from "react-router-dom/Switch"
-import Route from "react-router-dom/Route"
+import {Route, Switch} from 'react-router-dom'
 import Layout from './hoc/Layout/Layout'
 import Quiz from './containers/Quiz/Quiz'
 import Auth from './containers/Auth/Auth'
