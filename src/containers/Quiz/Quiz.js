@@ -1,37 +1,32 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import classes from './Quiz.module.sass'
 import ActiveQuiz from '../../components/ActiveQuiz/ActiveQuiz'
 import FinishedQuiz from '../../components/FinishedQuiz/FinishedQuiz'
+import axios from '../../axios/axios-quiz'
+import Loader from '../../components/UI/Loader/Loader'
 
-export default () => {
+export default props => {
   const [results, setResults] = useState({})
   const [isFinished, setIsFinished] = useState(false)
   const [activeQuestion, setActiveQuestion] = useState(0)
   const [answerState, setAnswerState] = useState(null)
-  const [quiz] = useState([
-    {
-      id: 1,
-      question: 'Какого цвета небо?',
-      rightAnswerId: 2,
-      answers: [
-        {text: 'Черный', id: 1},
-        {text: 'Синий', id: 2},
-        {text: 'Красный', id: 3},
-        {text: 'Зеленый', id: 4}
-      ]
-    },
-    {
-      id: 2,
-      question: 'В каком году основали Санкт-Петербург?',
-      rightAnswerId: 3,
-      answers: [
-        {text: '1700', id: 1},
-        {text: '1702', id: 2},
-        {text: '1703', id: 3},
-        {text: '1803', id: 4}
-      ]
-    }
-  ])
+  const [quiz, setQuiz] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await axios.get(`/quizes/${props.match.params.id}.json`)
+        const _quiz = response.data
+        console.log(_quiz)
+        setQuiz(_quiz)
+        setLoading(false)
+      }
+      catch (e) {
+        console.log(e.message)
+      }
+    })()
+  }, [props.match.params.id])
 
   const onAnswerClickHandler = answerId => {
     if (answerState) {
@@ -42,7 +37,7 @@ export default () => {
     const question = quiz[activeQuestion]
     const res = results
 
-    if (question.rightAnswerId === answerId) {
+    if (question.rightAnswer === answerId) {
       if (!res[question.id]) res[question.id] = 'success'
 
       setAnswerState({[answerId]: 'success'})
@@ -64,16 +59,14 @@ export default () => {
       setResults(res)
     }
   }
-
-  function isQuizFinished() {
-    return activeQuestion + 1 === quiz.length
-  }
-
   const retryHandler = () => {
     setActiveQuestion(0)
     setAnswerState(null)
     setIsFinished(false)
     setResults({})
+  }
+  function isQuizFinished() {
+    return activeQuestion + 1 === quiz.length
   }
 
   return (
@@ -82,13 +75,15 @@ export default () => {
           <h1>Ответьте на все вопросы</h1>
 
           {
-            isFinished
-              ? <FinishedQuiz
+            loading
+              ? <Loader/>
+              : isFinished
+                ? <FinishedQuiz
                     results={results}
                     quiz={quiz}
                     onRetry={retryHandler}
                 />
-              : <ActiveQuiz
+                : <ActiveQuiz
                     answers={quiz[activeQuestion].answers}
                     question={quiz[activeQuestion].question}
                     onAnswerClick={onAnswerClickHandler}
